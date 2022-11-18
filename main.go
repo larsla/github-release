@@ -80,6 +80,7 @@ Parameters:
 	<branch>: Reference from where to create the provided <tag>, if it does not exist
 	<description>: The release description
 	<files>: Glob pattern describing the list of files to include in the release.
+	Multiple glob patterns can be supplied, delimited by a whitespace.
 	Make sure you enclose it in quotes to avoid the shell expanding the glob pattern.
 
 Options:
@@ -135,9 +136,13 @@ Please refer to https://help.github.com/articles/creating-an-access-token-for-co
 		log.Println(flag.Arg(4))
 	}
 
-	filepaths, err := filepath.Glob(flag.Arg(4))
-	if err != nil {
-		log.Fatalf("Error: Invalid glob pattern: %s\n", flag.Arg(4))
+	var filepaths []string
+	for _, glob := range strings.Split(flag.Arg(4), " ") {
+		paths, err := filepath.Glob(glob)
+		if err != nil {
+			log.Fatalf("Error: Invalid glob pattern: %s\n", glob)
+		}
+		filepaths = append(filepaths, paths...)
 	}
 
 	if debug {

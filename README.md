@@ -10,11 +10,12 @@ Usage:
 	github-release <user/repo> <tag> <branch> <description> "<files>"
 
 Parameters:
-	<user/repo>: Github user and repository
-	<tag>: Used to created the release. It is also used as the release's name
-	<branch>: Reference from where to create the provided <tag>, if it does not exist
-	<description>: The release description
-	<files>: Glob pattern describing the list of files to include in the release
+	<user/repo>: Github user and repository.
+	<tag>: Used to created the release. It is also used as the release's name.
+	<branch>: Reference from where to create the provided <tag>, if it does not exist.
+	<description>: The release description.
+	<files>: Glob pattern describing the list of files to include in the release.
+	Multiple glob patterns can be supplied, delimited by a whitespace.
 	Make sure you enclose it in quotes to avoid the shell expanding the glob pattern.
 
 Options:
