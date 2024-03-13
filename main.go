@@ -41,12 +41,16 @@ type Release struct {
 	Body       string `json:"body"`
 	Draft      bool   `json:"draft"`
 	Prerelease bool   `json:"prerelease"`
+	MakeLatest string `json:"make_latest"`
 }
 
-var verFlag bool
-var prereleaseFlag bool
-var draftFlag bool
-var recreateDraftFlag bool
+var (
+	verFlag           bool
+	prereleaseFlag    bool
+	draftFlag         bool
+	recreateDraftFlag bool
+	latest            bool
+)
 
 func init() {
 	log.SetFlags(0)
@@ -66,6 +70,7 @@ func init() {
 	flag.BoolVar(&prereleaseFlag, "prerelease", false, "-prerelease")
 	flag.BoolVar(&draftFlag, "draft", false, "-draft")
 	flag.BoolVar(&recreateDraftFlag, "recreateDraft", false, "-recreateDraft")
+	flag.BoolVar(&latest, "latest", true, "-latest")
 	flag.Parse()
 }
 
@@ -88,6 +93,7 @@ Options:
 	-prerelease: Identify the release as a prerelease
 	-draft: Save as draft, don't publish
 	-recreateDraft: Deletes the previous release drafts matching the tag of the release, if they exist
+	-latest: Mark this release as latest. Default true.
 
 Environment variables:
   DEBUG: Allows you to run github-release in debugging mode. DO NOT do this if you are attempting to upload big files.
@@ -161,6 +167,7 @@ Please refer to https://help.github.com/articles/creating-an-access-token-for-co
 		Draft:      draftFlag,
 		Branch:     branch,
 		Body:       desc,
+		MakeLatest: fmt.Sprintf("%v", latest),
 	}
 	publishRelease(release, filepaths)
 	log.Println("Done")
