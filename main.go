@@ -50,6 +50,8 @@ var (
 	draftFlag         bool
 	recreateDraftFlag bool
 	latest            bool
+	descFile          string
+	assets            string
 )
 
 func init() {
@@ -71,22 +73,20 @@ func init() {
 	flag.BoolVar(&draftFlag, "draft", false, "-draft")
 	flag.BoolVar(&recreateDraftFlag, "recreateDraft", false, "-recreateDraft")
 	flag.BoolVar(&latest, "latest", true, "-latest")
+	flag.StringVar(&descFile, "description", "", "-description")
+	flag.StringVar(&assets, "assets", "", "-assets")
 	flag.Parse()
 }
 
 var usage = `Github command line release tool.
 
 Usage:
-	github-release <user/repo> <tag> <branch> <description> "<files>"
+	github-release <user/repo> <tag> <branch>
 
 Parameters:
 	<user/repo>: Github user and repository
 	<tag>: Used to created the release. It is also used as the release's name
 	<branch>: Reference from where to create the provided <tag>, if it does not exist
-	<description>: The release description
-	<files>: Glob pattern describing the list of files to include in the release.
-	Multiple glob patterns can be supplied, delimited by a whitespace.
-	Make sure you enclose it in quotes to avoid the shell expanding the glob pattern.
 
 Options:
 	-version: Displays version
@@ -94,6 +94,10 @@ Options:
 	-draft: Save as draft, don't publish
 	-recreateDraft: Deletes the previous release drafts matching the tag of the release, if they exist
 	-latest: Mark this release as latest. Default true.
+	-description: Path to a file containing the release description.
+	-assets: Glob pattern describing the list of files to include in the release.
+	Multiple glob patterns can be supplied, delimited by a whitespace.
+	Make sure you enclose it in quotes to avoid the shell expanding the glob pattern.
 
 Environment variables:
   DEBUG: Allows you to run github-release in debugging mode. DO NOT do this if you are attempting to upload big files.
@@ -117,9 +121,13 @@ func main() {
 		return
 	}
 
-	if flag.NArg() != 5 {
-		log.Printf("Error: Invalid number of arguments (got %d, expected 5)\n\n", flag.NArg())
+	if flag.NArg() != 3 {
+		log.Printf("Error: Invalid number of arguments (got %d, expected 3)\n\n", flag.NArg())
 		log.Fatal(usage)
+	}
+
+	if descFile == "" {
+		log.Fatalf("Error: No -description file supplied.")
 	}
 
 	userRepo := strings.Split(flag.Arg(0), "/")
@@ -143,7 +151,7 @@ Please refer to https://help.github.com/articles/creating-an-access-token-for-co
 	}
 
 	var filepaths []string
-	for _, glob := range strings.Split(flag.Arg(4), " ") {
+	for _, glob := range strings.Split(assets, " ") {
 		paths, err := filepath.Glob(glob)
 		if err != nil {
 			log.Fatalf("Error: Invalid glob pattern: %s\n", glob)
@@ -158,7 +166,11 @@ Please refer to https://help.github.com/articles/creating-an-access-token-for-co
 
 	tag := flag.Arg(1)
 	branch := flag.Arg(2)
-	desc := flag.Arg(3)
+	desc, err := os.ReadFile(descFile)
+	if err != nil {
+		log.Fatalf("Error: Failed to read description file '%s': %s", descFile, err)
+	}
+	fmt.Println("description:", string(desc))
 
 	release := Release{
 		TagName:    tag,
@@ -166,7 +178,7 @@ Please refer to https://help.github.com/articles/creating-an-access-token-for-co
 		Prerelease: prereleaseFlag,
 		Draft:      draftFlag,
 		Branch:     branch,
-		Body:       desc,
+		Body:       string(desc),
 		MakeLatest: fmt.Sprintf("%v", latest),
 	}
 	publishRelease(release, filepaths)
